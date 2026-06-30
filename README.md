@@ -174,6 +174,3 @@ docker compose down -v
 
 ---
 
-## Licencia
-
-Uso académico — IS-404 ULEAM 2026-1
