@@ -98,9 +98,7 @@ El script realiza peticiones HTTP reales a los tres microservicios en orden, pau
 # PowerShell
 Invoke-RestMethod http://localhost:8001/productos
 
-# Bash / curl
-curl http://localhost:8001/productos
-```
+
 
 ### Paso 6 — Registrar una venta
 
@@ -110,21 +108,12 @@ Invoke-RestMethod -Method POST -Uri "http://localhost:8002/ventas" `
   -ContentType "application/json" `
   -Body '{"producto_id": 1, "cantidad": 2, "cliente": "Juan Pérez"}'
 
-# Bash / curl
-curl -X POST http://localhost:8002/ventas \
-  -H "Content-Type: application/json" \
-  -d '{"producto_id": 1, "cantidad": 2, "cliente": "Juan Pérez"}'
-```
-
 ### Paso 7 — Verificar el Outbox Pattern
 
 ```bash
 # PowerShell
 Invoke-RestMethod http://localhost:8001/outbox
 
-# Bash / curl
-curl http://localhost:8001/outbox
-```
 
 ### Paso 8 — Consultar la auditoría
 
@@ -132,9 +121,6 @@ curl http://localhost:8001/outbox
 # PowerShell
 Invoke-RestMethod http://localhost:8003/auditoria
 
-# Bash / curl
-curl http://localhost:8003/auditoria
-```
 
 ### Paso 9 — Probar SAGA: venta con stock insuficiente
 
@@ -144,11 +130,6 @@ Invoke-RestMethod -Method POST -Uri "http://localhost:8002/ventas" `
   -ContentType "application/json" `
   -Body '{"producto_id": 1, "cantidad": 999, "cliente": "Test SAGA"}'
 
-# Bash / curl
-curl -X POST http://localhost:8002/ventas \
-  -H "Content-Type: application/json" \
-  -d '{"producto_id": 1, "cantidad": 999, "cliente": "Test SAGA"}'
-```
 
 El Inventory Service genera un evento `stock.insuficiente` en lugar de bloquear el sistema.
 
@@ -157,10 +138,17 @@ El Inventory Service genera un evento `stock.insuficiente` en lugar de bloquear 
 ```bash
 # PostgreSQL — Inventario
 docker exec -it farmacia_inventory_db psql -U inv_user -d inventario
-
+#prueba en SQL
+SELECT * FROM productos;
+#para salir
+\q
 # MongoDB — Ventas
 docker exec -it farmacia_sales_db mongosh -u sales_user -p sales_pass --authenticationDatabase admin
 ```
+#consulta
+show dbs
+#Para salir
+exit
 
 ### Paso 11 — Apagar el entorno
 
