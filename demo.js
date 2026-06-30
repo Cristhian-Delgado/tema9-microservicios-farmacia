@@ -1,6 +1,5 @@
 /**
  * demo.js — Script de demostración del Tema 9
- * IS-404 Administración de Bases de Datos Distribuidas | ULEAM 2026-1
  *
  * Ejecutar con: node demo.js
  * El script realiza peticiones HTTP reales a los tres microservicios,
@@ -34,7 +33,7 @@ function sep(title) {
 }
 
 async function main() {
-  console.log("\n🏥  DEMO — Arquitectura de Microservicios para Farmacia");
+  console.log("\n  DEMO — Arquitectura de Microservicios para Farmacia");
   console.log("    IS-404 | ULEAM 2026-1\n");
 
   // ── PASO 1: Inventario inicial ────────────────────────────────────────
@@ -53,7 +52,7 @@ async function main() {
   });
   console.log("Respuesta del Sales Service:");
   console.log(JSON.stringify(venta, null, 2));
-  console.log("\n⏳ Esperando propagación del evento (consistencia eventual)...");
+  console.log("\n Esperando propagación del evento (consistencia eventual)...");
   await sleep(2500);
 
   // ── PASO 3: Inventario actualizado ───────────────────────────────────
@@ -79,7 +78,7 @@ async function main() {
   });
   console.log("Respuesta (venta registrada en Sales, pero...):");
   console.log(JSON.stringify(ventaFallida, null, 2));
-  console.log("\n⏳ Esperando evento de fallo...");
+  console.log("\n Esperando evento de fallo...");
   await sleep(2500);
 
   // ── PASO 6: Outbox tras fallo ─────────────────────────────────────────
@@ -95,7 +94,7 @@ async function main() {
   console.log("Historial completo de eventos:");
   console.log(JSON.stringify(auditoria, null, 2));
 
-  sep("✅  DEMO COMPLETADA");
+  sep("  DEMO COMPLETADA");
   console.log("Resumen:");
   console.log("  • Sales Service  → venta registrada en MongoDB");
   console.log("  • Inventory Svc  → stock descontado vía evento (PostgreSQL)");
@@ -105,6 +104,6 @@ async function main() {
 }
 
 main().catch((err) => {
-  console.error("❌ Error en la demo:", err.message);
+  console.error(" Error en la demo:", err.message);
   process.exit(1);
 });
