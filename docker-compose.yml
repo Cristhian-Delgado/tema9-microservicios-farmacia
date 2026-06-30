@@ -1,0 +1,134 @@
+version: "3.9"
+
+services:
+  # ─── Broker de mensajes ───────────────────────────────────────────────
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: farmacia_rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: admin
+      RABBITMQ_DEFAULT_PASS: admin
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  # ─── Base de datos: Inventario (PostgreSQL) ───────────────────────────
+  inventory_db:
+    image: postgres:15
+    container_name: farmacia_inventory_db
+    environment:
+      POSTGRES_USER: inv_user
+      POSTGRES_PASSWORD: inv_pass
+      POSTGRES_DB: inventario
+    ports:
+      - "5433:5432"
+    volumes:
+      - inventory_data:/var/lib/postgresql/data
+      - ./services/inventory-service/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U inv_user -d inventario"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # ─── Base de datos: Auditoría (PostgreSQL) ────────────────────────────
+  audit_db:
+    image: postgres:15
+    container_name: farmacia_audit_db
+    environment:
+      POSTGRES_USER: audit_user
+      POSTGRES_PASSWORD: audit_pass
+      POSTGRES_DB: auditoria
+    ports:
+      - "5434:5432"
+    volumes:
+      - audit_data:/var/lib/postgresql/data
+      - ./services/audit-service/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U audit_user -d auditoria"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # ─── Base de datos: Ventas (MongoDB) ─────────────────────────────────
+  sales_db:
+    image: mongo:6
+    container_name: farmacia_sales_db
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: sales_user
+      MONGO_INITDB_ROOT_PASSWORD: sales_pass
+    ports:
+      - "27017:27017"
+    volumes:
+      - sales_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  # ─── Microservicio: Inventario ────────────────────────────────────────
+  inventory_service:
+    build: ./services/inventory-service
+    container_name: farmacia_inventory_svc
+    ports:
+      - "8001:8001"
+    environment:
+      PORT: 8001
+      DB_HOST: inventory_db
+      DB_PORT: 5432
+      DB_USER: inv_user
+      DB_PASS: inv_pass
+      DB_NAME: inventario
+      RABBITMQ_URL: amqp://admin:admin@rabbitmq:5672
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      inventory_db:
+        condition: service_healthy
+
+  # ─── Microservicio: Ventas ────────────────────────────────────────────
+  sales_service:
+    build: ./services/sales-service
+    container_name: farmacia_sales_svc
+    ports:
+      - "8002:8002"
+    environment:
+      PORT: 8002
+      MONGO_URL: mongodb://sales_user:sales_pass@sales_db:27017/ventas?authSource=admin
+      RABBITMQ_URL: amqp://admin:admin@rabbitmq:5672
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      sales_db:
+        condition: service_healthy
+
+  # ─── Microservicio: Auditoría ─────────────────────────────────────────
+  audit_service:
+    build: ./services/audit-service
+    container_name: farmacia_audit_svc
+    ports:
+      - "8003:8003"
+    environment:
+      PORT: 8003
+      DB_HOST: audit_db
+      DB_PORT: 5432
+      DB_USER: audit_user
+      DB_PASS: audit_pass
+      DB_NAME: auditoria
+      RABBITMQ_URL: amqp://admin:admin@rabbitmq:5672
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      audit_db:
+        condition: service_healthy
+
+volumes:
+  inventory_data:
+  audit_data:
+  sales_data:
